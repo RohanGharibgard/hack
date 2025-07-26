@@ -9,7 +9,7 @@ from send_to_openai import speech_analyze_image
 script_dir = os.path.dirname(os.path.abspath(__file__))
 image_filename = os.path.join(script_dir, "../frontend/src/downloaded_image.jpg")
 mp3_filename = os.path.join(script_dir, "../frontend/src/image_analysis.mp3")
-url = "http://172.20.10.6/1024x768.jpg"             # You will have to change the IP Address
+url = "http://192.168.50.170/1024x768.jpg" # You will have to change the IP Address
 
 # Function to download the image from esp32, given to you
 def download_image(filename: str):
