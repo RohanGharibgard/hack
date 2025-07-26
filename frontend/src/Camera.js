@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from "react";
 import {AppContext, socket} from "./App";
-
+import imagePath from "./downloaded_image.jpg"
 
 function handleClick() {
   console.log("Requesting to take picture...")
@@ -8,7 +8,7 @@ function handleClick() {
 }
 export function Camera() {
   const [pictureStatus, setPictureStatus] = useState("");
-  const [imagePath, setImagePath] = useState("");
+  // const [imagePath, setImagePath] = useState("");
 
   useEffect(() => {
     socket.on('connect', () => console.log('Connected:', socket.id));
@@ -25,10 +25,10 @@ export function Camera() {
   }, []);
 
   return (
-    <div className="camera" style={{textAlign: 'center', height: 700, width: 'auto'}}>
-        <img src={pictureStatus !== "" ? imagePath : "null_image.jpeg"} height='70%'></img>
+    <div className="camera" style={{textAlign: 'center', width: '700'}}>
+        <img src={pictureStatus !== "" ? imagePath : "null_image.jpeg"} width='70%'></img>
         <div>
-            <button onClick={(e) => handleClick()}>Take photo</button>
+            <button onClick={(e) => handleClick()} height="auto">Take photo</button>
         </div>
     </div>
 
