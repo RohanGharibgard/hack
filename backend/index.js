@@ -16,7 +16,7 @@ const io = new Server(server, {
   }
 });
 
-const CLIENTID = "frontend";
+const CLIENTID = "backend";
 
 const client = MQTT.connect(process.env.CONNECT_URL, {
   clientId: CLIENTID,
@@ -106,7 +106,12 @@ io.on("connection", (socket) => {
   if (latestTemp) {
     socket.emit('temp', latestTemp);
   }
-  if (latestUltrasonic) socket.emit('ultrasonic', latestUltrasonic);
+  if (latestHumidity) {
+    socket.emit('humidity', latestHumidity)
+  }
+  if (latestUltrasonic) {
+    socket.emit('ultrasonic', latestUltrasonic);
+  }
   if (latestLight) {
     socket.emit('light', latestLight);
   }
