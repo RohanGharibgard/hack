@@ -9,9 +9,9 @@ class sslWrap:
         self.wrap_socket = ssl.wrap_socket
 
 
-def connect_mqtt(mqtt_server, mqtt_user, mqtt_pass):
+def connect_mqtt(client_id, mqtt_server, mqtt_user, mqtt_pass):
     client = MQTTClient(
-        client_id=b"pico",
+        client_id=client_id,
         server= mqtt_server,
         port=8883,
         user=mqtt_user,

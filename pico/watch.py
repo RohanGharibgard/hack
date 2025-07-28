@@ -1,77 +1,26 @@
-import framebuf
 
-class SSD1306:
-    def __init__(self, width, height, external_vcc):
-        self.width = width
-        self.height = height
-        self.external_vcc = external_vcc
-        self.pages = self.height // 8
-        self.buffer = bytearray(self.width * self.pages)
-        self.framebuf = framebuf.FrameBuffer(self.buffer, self.width, self.height, framebuf.MONO_VLSB)
-        self.poweron()
-        self.init_display()
-
-    def init_display(self):
-        for cmd in (
-            0xae, 0x20, 0x00, 0x40, 0xa1, 0xc8, 0xda, 0x12, 0x81, 0xcf, 0xa4,
-            0xa6, 0xd5, 0x80, 0x8d, 0x14, 0xaf
-        ):
-            self.write_cmd(cmd)
-
-    def poweron(self):
-        pass
-
-    def write_cmd(self, cmd):
-        raise NotImplementedError
-
-    def write_data(self, buf):
-        raise NotImplementedError
-
-    def fill(self, col):
-        self.framebuf.fill(col)
-
-    def pixel(self, x, y, col):
-        self.framebuf.pixel(x, y, col)
-
-    def scroll(self, dx, dy):
-        self.framebuf.scroll(dx, dy)
-
-    def text(self, string, x, y, col=1):
-        self.framebuf.text(string, x, y, col)
-
-    def show(self):
-        raise NotImplementedError
-
-class SSD1306_I2C(SSD1306):
-    def __init__(self, width, height, i2c, addr=0x3c, external_vcc=False):
-        self.i2c = i2c
-        self.addr = addr
-        self.temp = bytearray(2)
-        super().__init__(width, height, external_vcc)
-
-    def write_cmd(self, cmd):
-        self.temp[0] = 0x80
-        self.temp[1] = cmd
-        self.i2c.writeto(self.addr, self.temp)
-
-    def write_data(self, buf):
-        self.i2c.writeto(self.addr, b'\x40' + buf)
-
-    def show(self):
-        for page in range(0, self.height // 8):
-            self.write_cmd(0xb0 | page)
-            self.write_cmd(0x02)
-            self.write_cmd(0x10)
-            start = self.width * page
-            end = start + self.width
-            self.write_data(self.buffer[start:end])
-
-from machine import Pin, I2C
+from machine import Pin, I2C, ADC
+from display import SSD1306_I2C
 import time
-
 i2c = I2C(0, scl=Pin(1), sda=Pin(0))
-
 oled = SSD1306_I2C(128, 64, i2c)
+client_id = b'watch_pico'
+ldr = ADC(Pin(26))
+def read_light():
+    light_adc = ldr.read_u16()
+    lumens = (65535 - light_adc) / 65359
+    return lumens
+
+
+def oled_display(message: str):
+    print(f"Showing message '{message}' on oled")
+    DISPLAY_WIDTH = 16
+    oled.fill(0)
+    for i in range(len(message) // DISPLAY_WIDTH + 1):
+        oled.text(message[i*DISPLAY_WIDTH: (i+1) *DISPLAY_WIDTH], 0, i* DISPLAY_WIDTH)
+    oled.show()
+
+"""
 oled.fill(0)
 
 oled.fill(0)
@@ -89,3 +38,39 @@ while True:
 
     time.sleep(1)
 
+"""
+
+# oled_display("Hello everybody how is your day going? Try going to the end of the wall.")
+
+
+
+
+
+callbacks = {
+    'display': oled_display
+}
+
+def init_client(client, callback):
+    client.set_callback(callback)
+    client.subscribe('display')
+
+actions = {
+    'light': read_light
+}
+
+prev_measurement_times = {
+    'light': time.time()
+}
+
+intra_action_periods = {
+    'light': 1
+}
+
+update_list = ['light']
+
+def update(client):
+    current_time = time.time()
+    for item in update_list:
+        if current_time - prev_measurement_times[item] >= intra_action_periods[item]:
+            client.publish(item, str(actions[item]()))
+            prev_measurement_times[item] = current_time
