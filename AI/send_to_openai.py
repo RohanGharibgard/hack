@@ -72,6 +72,8 @@ def text_to_speech(text: str, mp3_output_path: str, speech_instructions: str):
 
 # TODO: Can we put everything together?
 def speech_analyze_image(image_path: str, image_prompt: str, mp3_output_path: str, speech_prompt: str):
+    print(f"Image prompt: {image_prompt}")
+
     text_analysis = analyze_image(image_path, image_prompt).output_text
     text_to_speech(text_analysis, mp3_output_path, speech_prompt)
 
