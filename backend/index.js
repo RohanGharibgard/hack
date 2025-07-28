@@ -52,7 +52,7 @@ client.on("reconnect", function () {
 client.on('connect', async () => {
   console.log("Connected");
 
-  client.subscribe("ultrasonic", (err) => {
+  client.subscribe("distance", (err) => {
     if (err) {
       console.error("Subscription error for 'ultrasonic': ", err);
     } else {
@@ -110,7 +110,7 @@ io.on("connection", (socket) => {
     socket.emit('humidity', latestHumidity)
   }
   if (latestUltrasonic) {
-    socket.emit('ultrasonic', latestUltrasonic);
+    socket.emit('distance', latestUltrasonic);
   }
   if (latestLight) {
     socket.emit('light', latestLight);
@@ -142,9 +142,36 @@ io.on("connection", (socket) => {
     pythonProcess.on('close', (code) => {
       console.log(`Python script finished with code ${code}`);
       if (code === 0) {
-        socket.emit('picture_taken', { success: true, message: 'Picture analyzed successfully!' });
+        socket.emit('picture_taken', { success: true, message: 'Picture taken successfully!' });
       } else {
-        socket.emit('picture_taken', { success: false, message: 'Failed to analyze picture' });
+        socket.emit('picture_taken', { success: false, message: 'Failed to take picture' });
+      }
+    });
+  });
+
+  socket.on('analyze_picture', (prompt) => {
+    console.log('Analyzing image...');
+    console.log(`prompt ${prompt}`)
+    
+    // Execute the Python script
+    const pythonProcess = spawn('python3', ['../AI/analyze.py', prompt.toString()], {
+      cwd: __dirname
+    });
+
+    pythonProcess.stdout.on('data', (data) => {
+      console.log(`Python output: ${data}`);
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      console.error(`Python error: ${data}`);
+    });
+
+    pythonProcess.on('close', (code) => {
+      console.log(`Python script finished with code ${code}`);
+      if (code === 0) {
+        socket.emit('picture_analyzed', { success: true, message: 'Picture analyzed successfully!' });
+      } else {
+        socket.emit('picture_analyzed', { success: false, message: 'Failed to take picture' });
       }
     });
   });
@@ -157,7 +184,7 @@ io.on("connection", (socket) => {
 
 setInterval(() => {
   io.emit('temp', latestTemp);
-  io.emit('ultrasonic', latestUltrasonic);
+  io.emit('distance', latestUltrasonic);
   io.emit('humidity', latestHumidity);
   io.emit('light', latestLight)
 }, 1000);
@@ -171,7 +198,7 @@ client.on('message', (TOPIC, payload) => {
   if( TOPIC === 'temp' ) {
     latestTemp = payload.toString();
   }
-  else if ( TOPIC === 'ultrasonic' ) {
+  else if ( TOPIC === 'distance' ) {
     latestUltrasonic = payload.toString();
   }
   else if ( TOPIC === 'humidity') {
