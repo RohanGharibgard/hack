@@ -14,7 +14,11 @@ export default function Message() {
                     setMessage(e.target.value)
                 }
              } />
-            <button type="button" onClick={() => handleSend(message)}>Send</button>
+            <button type="button" onClick={() => {
+                handleSend(message);
+                setMessage("")
+            }
+            }>Send</button>
         </div>
     )
 }
